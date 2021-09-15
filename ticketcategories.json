@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Staff",
+    "emoji": "🛠️",
+    "btn-color": "PRIMARY",
+    "category-id": "886966094672330822",
+    "role-id": "887210357561638922"
+  },
+  {
+    "name": "Lead",
+    "emoji": "💎",
+    "btn-color": "SECONDARY",
+    "category-id": "887083518214164551",
+    "role-id": "887210383859937332"
+  }
+]
