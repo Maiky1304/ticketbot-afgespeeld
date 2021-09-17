@@ -45,9 +45,11 @@ module.exports = class TicketToolsEvent extends Event {
     const row = new MessageActionRow();
     row.addComponents(cancelButton);
 
-    interaction.reply({
-      embeds: [embed],
-      components: [row],
-    });
+    interaction
+      .reply({
+        embeds: [embed],
+        components: [row],
+      })
+      .then((result) => setTimeout(() => result.delete(), 1000 * 10));
   }
 };

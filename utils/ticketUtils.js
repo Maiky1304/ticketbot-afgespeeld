@@ -42,7 +42,13 @@ module.exports.closeTicket = async (client, channel) => {
       deleteTicket.setStyle("DANGER");
       deleteTicket.setCustomId("close-options-delete");
 
-      closeOptions.addComponents(deleteTicket);
+      const createTranscript = new MessageButton();
+      createTranscript.setLabel("Maak transcript");
+      createTranscript.setEmoji("🖨️");
+      createTranscript.setStyle("PRIMARY");
+      createTranscript.setCustomId("close-options-transcript");
+
+      closeOptions.addComponents(deleteTicket, createTranscript);
 
       await channel.send({
         embeds: [embed],

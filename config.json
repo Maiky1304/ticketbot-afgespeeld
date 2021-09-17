@@ -2,5 +2,6 @@
   "token": "ODY1NzYwMTI2Njk5MDQ0ODg1.YPIr8w.MTyNQpRCz6_i9tLYq7VL0NjvcSs",
   "prefix": ">",
   "themecolor": "#a103fc",
-  "everyone-role-id": "885275069792788481"
+  "everyone-role-id": "885275069792788481",
+  "mongo": "mongodb://136.243.47.232:27017/ticketbot"
 }

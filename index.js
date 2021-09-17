@@ -12,6 +12,13 @@ const { loadEvents } = require("./handlers/eventhandler");
 
 client.config = require("./config.json");
 client.ticketUtils = require("./utils/ticketUtils");
+client.embedUtils = require("./utils/embedUtils");
+
+const mongoose = require("mongoose");
+mongoose
+  .connect(client.config.mongo)
+  .then((_result) => console.log("Connected with MongoDB"))
+  .catch((err) => console.error(err));
 
 client.once("ready", () => {
   console.log(
