@@ -15,7 +15,16 @@ module.exports = class TicketToolsEvent extends Event {
         return this.closeTicket(interaction);
       case "cancel-ticket-close":
         return this.cancelCloseTicket(interaction);
+      case "close-options-transcript":
+        return this.createTranscript(interaction);
     }
+  }
+
+  async createTranscript(interaction) {
+    await this.client.ticketUtils.createTranscript(
+      this.client,
+      interaction.channel
+    );
   }
 
   async cancelCloseTicket(interaction) {

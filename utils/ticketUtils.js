@@ -1,4 +1,5 @@
 const { MessageEmbed, MessageButton, MessageActionRow } = require("discord.js");
+const fs = require("fs");
 
 const ticketsClosing = [],
   ticketsDelete = [];
@@ -77,4 +78,64 @@ module.exports.deleteTicket = async (client, channel) => {
     }
   }, 1000 * 10);
   return embed;
+};
+
+module.exports.createTranscript = async (client, channel) => {
+  let content = "";
+  const messages = await channel.messages.fetch();
+  messages.forEach((message) => {
+    formatTags = (message) => {
+      for (const word of message.split(" ")) {
+        if (!word.startsWith("<@") && !word.endsWith(">")) continue;
+        const replaceWith = `<p class="tag">${word}</p>`;
+        message = message.replace(word, replaceWith);
+      }
+      return message;
+    };
+    html = `<div class="${message.embeds.length === 0 ? "message" : "embed"}">
+      <h3><img src="${message.author.displayAvatarURL({
+        dynamic: true,
+      })}" alt="?"></img> ${message.author.username}#${
+      message.author.discriminator
+    }</h3>
+      ${
+        message.embeds.length === 0
+          ? `<p>${formatTags(message.content)}</p>`
+          : `<div="embed_box">
+          <h4>${message.embeds[0].title}</h4>
+          <p>${message.embeds[0].description}</p>
+        </div>`
+      }
+    </div>
+    
+    <br>
+    
+    `;
+    content += html;
+  });
+  content = content.slice(0, content.length - 8);
+
+  let file = fs.readFileSync("templates/transcript.html", {
+    encoding: "utf8",
+  });
+  const variables = {
+    ticket_id: channel.name,
+    theme_color: client.config.themecolor,
+    channel_content: content,
+  };
+
+  for (let variable in variables) {
+    variable = `{{${variable}}}`;
+    while (file.includes(variable)) {
+      file = file.replace(
+        variable,
+        variables[variable.slice(2, variable.length - 2)]
+      );
+    }
+  }
+
+  fs.writeFileSync(`transcripts/${channel.id}.html`, file, {
+    encoding: "utf8",
+  });
+  return `transcripts/${channel.id}.html`;
 };
