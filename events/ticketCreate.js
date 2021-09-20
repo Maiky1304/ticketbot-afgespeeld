@@ -1,6 +1,10 @@
 const { Event } = require("../handlers/eventhandler");
 const { MessageEmbed, MessageButton, MessageActionRow } = require("discord.js");
 
+const builders = require('@discordjs/builders');
+
+const Ticket = require('../models/ticket');
+
 module.exports = class TicketCreateEvent extends Event {
   constructor(client) {
     super(client, "interactionCreate", "on");
@@ -44,12 +48,21 @@ module.exports = class TicketCreateEvent extends Event {
       ],
     });
 
+    // create database entry
+    const ticket = new Ticket({
+      channelId: ticketChannel.id,
+      guildId: ticketChannel.guild.id,
+      ticketCreator: interaction.member.id,
+      open: true
+    });
+    await ticket.save();
+
     // send info messages in channel
     const embed = new MessageEmbed();
     embed.setColor(this.client.config.themecolor);
-    embed.setTitle("Ticket gemaakt!");
+    embed.setTitle("Ticket - " + ticketId);
     embed.setDescription(
-      "Stel je vraag hier zo duidelijk mogelijk zodat je zo snel mogelijk geholpen kan worden."
+      `Welkom in je ticket ${interaction.member.toString()}.\n \n🛠️ **Commands**\n> ${builders.inlineCode(this.client.config.prefix + 'close')} - Sluit de ticket hiermee\n> ${builders.inlineCode(this.client.config.prefix + 'add <gebruiker>')} - Voeg iemand hiermee toe aan de ticket\n> ${builders.inlineCode(this.client.config.prefix + 'remove <gebruiker>')} - Verwijder iemand hiermee uit de ticket`
     );
     embed.setTimestamp();
     embed.setFooter("Bot by Maiky");
@@ -63,10 +76,43 @@ module.exports = class TicketCreateEvent extends Event {
     const row = new MessageActionRow();
     row.addComponents([closeTicket]);
 
-    await ticketChannel.send({
+    await this.client.logger.green(this.client, 'Ticket geopend', [
+      {
+        name: 'Geopend door',
+        value: interaction.member.toString(),
+        inline: false
+      },
+      {
+        name: 'Channel',
+        value: ticketChannel.toString(),
+        inline: false
+      }
+    ]);
+
+    const header = await ticketChannel.send({
       content: interaction.member.toString(),
       embeds: [embed],
       components: [row],
+    });
+    const question = await ticketChannel.send({
+      embeds: [
+        this.client.embedUtils.createEmbed(this.client)
+        .setTitle('Wat is je vraag?')
+      ]
+    });
+
+    const filter = m => m.author.id === interaction.member.id;
+    const collector = ticketChannel.createMessageCollector({ filter, max: 1 });
+    collector.on('end', async (collected) => {
+      const { content } = collected.first();
+      embed.addField('Vraag', content.length > 1024 ? `${content.slice(0, 1021)}...` : content, true);
+      await header.edit({
+        content: interaction.member.toString(),
+        embeds: [embed],
+        components: [row],
+      });
+      await question.delete();
+      await collected.first().delete();
     });
   }
 };

@@ -12,19 +12,57 @@ module.exports = class TicketToolsEvent extends Event {
     const customId = interaction.customId;
     switch (customId) {
       case "close-ticket":
+        await interaction.deferUpdate();
         return this.closeTicket(interaction);
       case "cancel-ticket-close":
         return this.cancelCloseTicket(interaction);
       case "close-options-transcript":
+        await interaction.deferUpdate();
         return this.createTranscript(interaction);
+      case "close-options-delete":
+        await interaction.deferUpdate();
+        return this.deleteTicket(interaction);
+      case "cancel-ticket-delete":
+        return this.cancelDeleteTicket(interaction);
     }
   }
 
+  async deleteTicket(interaction) {
+    const channel = interaction.channel;
+    const executor = interaction.member;
+
+    const embed = await this.client.ticketUtils.deleteTicket(
+      this.client,
+      channel,
+      executor
+    );
+
+    if (!embed) return;
+
+    const cancelButton = new MessageButton();
+    cancelButton.setCustomId("cancel-ticket-delete");
+    cancelButton.setLabel("Annuleren");
+    cancelButton.setStyle("SECONDARY");
+    cancelButton.setEmoji("📛");
+
+    const row = new MessageActionRow();
+    row.addComponents(cancelButton);
+
+    await channel.send({
+      embeds: [embed],
+      components: [row]
+    });
+  }
+
   async createTranscript(interaction) {
-    await this.client.ticketUtils.createTranscript(
+    const file = await this.client.ticketUtils.createTranscript(
       this.client,
       interaction.channel
     );
+    await interaction.channel.send({
+      embeds: [this.client.embedUtils.createEmbed(this.client).setTitle('De transcript is gemaakt en bijgevoegd aan dit bericht.')],
+      files: [file]
+    });
   }
 
   async cancelCloseTicket(interaction) {
@@ -36,14 +74,26 @@ module.exports = class TicketToolsEvent extends Event {
     await interaction.message.delete();
   }
 
+  async cancelDeleteTicket(interaction) {
+    await this.client.ticketUtils.cancelDelete(interaction.channel);
+    await interaction.reply({
+      content: "✅ Verwijderen geannuleerd!",
+      ephemeral: true,
+    });
+    await interaction.message.delete();
+  }
+
   async closeTicket(interaction) {
     const channel = interaction.channel;
     const executor = interaction.member;
 
     const embed = await this.client.ticketUtils.closeTicket(
       this.client,
-      channel
+      channel,
+      executor
     );
+
+    if (!embed) return false;
 
     const cancelButton = new MessageButton();
     cancelButton.setCustomId("cancel-ticket-close");
@@ -54,11 +104,13 @@ module.exports = class TicketToolsEvent extends Event {
     const row = new MessageActionRow();
     row.addComponents(cancelButton);
 
-    interaction
-      .reply({
-        embeds: [embed],
-        components: [row],
-      })
-      .then((result) => setTimeout(() => result.delete(), 1000 * 10));
+    const response = await channel.send({
+      embeds: [embed],
+      components: [row]
+    });
+    setTimeout( async () => {
+      await response.delete();
+    }, 10000);
+    return true;
   }
 };

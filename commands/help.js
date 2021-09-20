@@ -16,6 +16,7 @@ module.exports = class TestCommand extends Command {
         embed.setTitle('Ticket Bot - Help Menu');
         let description = '';
         Array.from(commands.values()).forEach(key => {
+            if (key.permission && !message.member.permissions.has(key.permission)) return;
             const line = builders.inlineCode(`${this.client.config.prefix}${key.label}`) + ` **|** ${key.description ? key.description : 'Geen beschrijving'}\n`;
             description += line;
         });

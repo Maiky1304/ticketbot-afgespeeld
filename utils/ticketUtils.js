@@ -1,10 +1,15 @@
 const { MessageEmbed, MessageButton, MessageActionRow } = require("discord.js");
 const fs = require("fs");
 
+const Ticket = require('../models/ticket');
+
 const ticketsClosing = [],
   ticketsDelete = [];
 
-module.exports.closeTicket = async (client, channel) => {
+module.exports.closeTicket = async (client, channel, executor) => {
+  if (ticketsClosing.includes(channel.id)) return null;
+  if (!Ticket.isOpen(channel)) return null;
+
   const embed = new MessageEmbed();
   embed.setTitle("De ticket wordt over 10 seconden gesloten...");
   embed.setColor(client.config.themecolor);
@@ -31,8 +36,27 @@ module.exports.closeTicket = async (client, channel) => {
         ],
       });
 
+      const ticket = await Ticket.findOne({ channelId: channel.id });
+      if (ticket) {
+        ticket.open = false;
+        await ticket.save();
+      }
+
+      await client.logger.orange(client, 'Ticket gesloten', [
+        {
+          name: 'Gesloten door',
+          value: executor.toString(),
+          inline: false
+        },
+        {
+          name: 'Channel',
+          value: channel.toString(),
+          inline: false
+        }
+      ]);
+
       const embed = new MessageEmbed();
-      embed.setTitle("De ticket is gesloten!");
+      embed.setTitle(`De ticket is gesloten door ${executor.user.username}#${executor.user.discriminator}.`);
       embed.setColor(client.config.themecolor);
 
       const closeOptions = new MessageActionRow();
@@ -67,13 +91,29 @@ module.exports.cancelClose = (channel) => {
   }
 };
 
-module.exports.deleteTicket = async (client, channel) => {
+module.exports.cancelDelete = async (channel) => {
+  const index = ticketsDelete.indexOf(channel.id);
+  if (index > -1) {
+    ticketsDelete.splice(index, index + 1);
+  }
+}
+
+module.exports.deleteTicket = async (client, channel, executor) => {
+  if (ticketsDelete.includes(channel.id)) return null;
+
   const embed = new MessageEmbed();
   embed.setTitle("De ticket wordt over 10 seconden verwijderd...");
   embed.setColor(client.config.themecolor);
   ticketsDelete.push(channel.id);
   setTimeout(async () => {
     if (ticketsDelete.includes(channel.id)) {
+      await Ticket.deleteOne({ channelId: channel.id });
+      const file = await this.createTranscript(client, channel);
+      await client.logger.red(client, 'Ticket verwijderd', [{
+        name: 'Verwijderd door',
+        value: executor.toString()
+      }]);
+      await client.logger.custom(client, { files: [file] });
       await channel.delete();
     }
   }, 1000 * 10);
@@ -84,6 +124,7 @@ module.exports.createTranscript = async (client, channel) => {
   let content = "";
   const messages = await channel.messages.fetch();
   messages.forEach((message) => {
+    if (message.embeds.length > 0) return;
     formatTags = (message) => {
       for (const word of message.split(" ")) {
         if (!word.startsWith("<@") && !word.endsWith(">")) continue;
@@ -93,19 +134,21 @@ module.exports.createTranscript = async (client, channel) => {
       return message;
     };
     html = `<div class="${message.embeds.length === 0 ? "message" : "embed"}">
-      <h3><img src="${message.author.displayAvatarURL({
+      <div class="content">
+        <h3><img src="${message.author.displayAvatarURL({
         dynamic: true,
-      })}" alt="?"></img> ${message.author.username}#${
+        })}" alt="?"></img> ${message.author.username}#${
       message.author.discriminator
-    }</h3>
+      }</h3>
       ${
         message.embeds.length === 0
-          ? `<p>${formatTags(message.content)}</p>`
+          ? ` <p>${formatTags(message.content)}</p>`
           : `<div="embed_box">
           <h4>${message.embeds[0].title}</h4>
-          <p>${message.embeds[0].description}</p>
+            <p>${message.embeds[0].description}</p>
         </div>`
       }
+      </div>
     </div>
     
     <br>

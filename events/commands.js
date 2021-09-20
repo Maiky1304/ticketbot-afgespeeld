@@ -1,4 +1,5 @@
 const { Event } = require('../handlers/eventhandler');
+const Ticket = require('../models/ticket');
 
 module.exports = class CommandEvent extends Event {
 
@@ -6,7 +7,7 @@ module.exports = class CommandEvent extends Event {
         super(client, 'messageCreate', 'on');
     }
 
-    execute(message) {
+    async execute(message) {
         const content = message.content;
 
         if (!content.startsWith(this.client.config.prefix)) return;
@@ -23,6 +24,16 @@ module.exports = class CommandEvent extends Event {
                 ephemeral: true
             });
             return;
+        }
+
+        if (command.ticketCommand) {
+            const ticket = await Ticket.findOne({ channelId: message.channel.id });
+            if (!ticket) {
+                message.reply({
+                    content: 'Je kunt dit commando alleen gebruiken in een ticket.'
+                });
+                return;
+            }
         }
 
         command.execute(message, label, args);

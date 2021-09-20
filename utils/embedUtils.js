@@ -12,3 +12,13 @@ module.exports.createErrorEmbed = () => {
   embed.setColor("#e80e0e");
   return embed;
 };
+
+module.exports.processObject = (obj) => {
+  const embed = new MessageEmbed();
+  embed.setTitle('Overzicht van de data:');
+  for (const key in obj) {
+    const value = obj[key];
+    embed.addField(key.toString(), value ? (value.toString().length > 1024 ? value.toString().slice(0, 1021) + '...' : value.toString()) : '???', true);
+  }
+  return embed;
+}

@@ -13,6 +13,7 @@ const { loadEvents } = require("./handlers/eventhandler");
 client.config = require("./config.json");
 client.ticketUtils = require("./utils/ticketUtils");
 client.embedUtils = require("./utils/embedUtils");
+client.logger = require('./utils/loggerUtil');
 
 const mongoose = require("mongoose");
 mongoose

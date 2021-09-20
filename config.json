@@ -3,5 +3,6 @@
   "prefix": ">",
   "themecolor": "#a103fc",
   "everyone-role-id": "885275069792788481",
-  "mongo": "mongodb://136.243.47.232:27017/ticketbot"
+  "log-channel": "888106255711875113",
+  "mongo": "mongodb+srv://maiky:tkp2jS6GZYIeaSGF@cluster0.npbkw.mongodb.net/ticketbot?retryWrites=true&w=majority"
 }
