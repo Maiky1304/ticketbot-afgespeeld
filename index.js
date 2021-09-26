@@ -33,4 +33,4 @@ client.once("ready", () => {
   loadEvents(client);
 });
 
-client.login("ODY1NzYwMTI2Njk5MDQ0ODg1.YPIr8w.MTyNQpRCz6_i9tLYq7VL0NjvcSs");
+client.login(client.config.token);
